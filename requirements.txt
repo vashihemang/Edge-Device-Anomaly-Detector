@@ -1,0 +1,14 @@
+# Edge-Device-Anomaly-Detector
+# Python dependencies inferred from the repository's Flask dashboard,
+# packet-sniffing code, deep-learning predictor, and FP-Growth rule engine.
+
+Flask
+Flask-SocketIO
+Werkzeug
+scapy
+numpy
+pandas
+scikit-learn
+joblib
+tensorflow
+mlxtend
