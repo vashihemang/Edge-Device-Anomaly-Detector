@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EdgeGuard AI — Network Security Overview</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg: #0a0e17;
+    --panel: #111827;
+    --panel-border: #1f2937;
+    --text: #e5e9f0;
+    --text-dim: #7b8494;
+    --blue: #3b82f6;
+    --cyan: #38bdf8;
+    --red: #f43f5e;
+    --green: #22c55e;
+    --amber: #f59e0b;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    background: radial-gradient(circle at 20% 0%, #10192e 0%, var(--bg) 55%);
+    color: var(--text);
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+    display:flex;
+    min-height:100vh;
+    overflow-x:hidden;
+  }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:230px;
+    flex-shrink:0;
+    background: rgba(17,24,39,0.9);
+    border-right:1px solid var(--panel-border);
+    padding:24px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; padding-left:4px; }
+  .brand-icon{
+    width:34px; height:34px;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    border-radius:8px;
+    box-shadow: 0 0 16px rgba(59,130,246,0.55);
+  }
+  .brand-icon svg{ width:18px; height:18px; fill:#fff; }
+  .brand-name{ font-size:17px; font-weight:600; letter-spacing:.2px; }
+
+  .nav{ display:flex; flex-direction:column; gap:4px; }
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-radius:8px;
+    color: var(--text-dim);
+    font-size:14px; cursor:pointer;
+    transition: background .18s ease, color .18s ease;
+    user-select:none;
+  }
+  .nav-item svg{ width:16px; height:16px; opacity:.85; flex-shrink:0; }
+  .nav-item:hover{ background: rgba(59,130,246,0.08); color: var(--text); }
+  .nav-item.active{
+    background: rgba(59,130,246,0.14);
+    color: var(--cyan);
+    box-shadow: inset 3px 0 0 var(--cyan);
+  }
+
+  /* ---------- Attack toggle button (under Live Traffic) ---------- */
+  .attack-toggle-btn{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    margin: 4px 2px 0;
+    padding:10px 12px;
+    border-radius:8px;
+    border:1px solid rgba(34,197,94,0.35);
+    background: rgba(34,197,94,0.08);
+    color: var(--green);
+    font-size:13px; font-weight:600;
+    cursor:pointer;
+    transition: background .2s ease, border-color .2s ease, color .2s ease, box-shadow .2s ease;
+  }
+  .attack-toggle-btn svg{ width:15px; height:15px; fill:currentColor; transition: fill .2s ease; }
+  .attack-toggle-btn:hover{ background: rgba(34,197,94,0.14); }
+  .attack-toggle-btn.active{
+    border-color: rgba(244,63,94,0.5);
+    background: rgba(244,63,94,0.12);
+    color: var(--red);
+    animation: attackBtnPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes attackBtnPulse{
+    0%,100%{ box-shadow:0 0 0 0 rgba(244,63,94,0.35); }
+    50%{ box-shadow:0 0 0 6px rgba(244,63,94,0); }
+  }
+
+  .sidebar-alert{
+    margin-top:auto;
+    border:1px solid rgba(244,63,94,0.4);
+    background: rgba(244,63,94,0.06);
+    border-radius:10px;
+    padding:16px;
+    text-align:center;
+  }
+  .sidebar-alert .label{ font-size:10px; letter-spacing:1px; color:var(--text-dim); margin-bottom:10px; }
+  .sidebar-alert .icon{
+    width:38px; height:38px; margin:0 auto 8px;
+    border-radius:50%;
+    background: rgba(244,63,94,0.15);
+    display:flex; align-items:center; justify-content:center;
+    animation: pulse-ring 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse-ring{
+    0%,100%{ box-shadow:0 0 0 0 rgba(244,63,94,0.35); }
+    50%{ box-shadow:0 0 0 8px rgba(244,63,94,0); }
+  }
+  .sidebar-alert .icon svg{ width:18px; height:18px; fill:var(--red); }
+  .sidebar-alert .title{ font-size:13px; font-weight:600; margin-bottom:2px; }
+  .sidebar-alert .user{ font-size:12px; color:var(--text-dim); margin-bottom:12px; }
+  .logout-btn{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:12px; color:var(--red);
+    background:none; border:none; cursor:pointer;
+  }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1; padding:24px 32px 40px; min-width:0; }
+  .topbar{ display:flex; align-items:center; justify-content:space-between; margin-bottom:22px; }
+  .topbar h1{ font-size:19px; font-weight:600; letter-spacing:.3px; }
+  .topbar-right{ display:flex; align-items:center; gap:22px; font-size:13px; color:var(--text-dim); }
+
+  #sys-status { font-weight: 500; transition: color 0.3s ease; }
+
+  .status-dot{
+    width:8px; height:8px; border-radius:50%;
+    background: var(--green); display:inline-block; margin-right:6px;
+    box-shadow:0 0 8px var(--green);
+    animation: blink 1.6s ease-in-out infinite;
+  }
+  @keyframes blink{ 0%,100%{opacity:1;} 50%{opacity:.45;} }
+  .alerts-pill{ display:flex; align-items:center; gap:6px; }
+  .alerts-pill svg{ width:14px; height:14px; fill:var(--amber); }
+  .alerts-count{ color:var(--text); font-weight:600; transition: transform .2s ease; }
+  .alerts-count.bump{ transform: scale(1.35); color: var(--red); }
+  .logout-link{ color: var(--red); text-decoration:none; display:flex; align-items:center; gap:4px; }
+
+  h2.section-title{ font-size:13px; font-weight:600; color:var(--text-dim); letter-spacing:.4px; margin: 26px 0 12px; }
+  h2.section-title:first-of-type{ margin-top:0; }
+
+  /* ---------- Stats grid ---------- */
+  .stats-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+  .stat-card{
+    background: var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:20px 22px;
+    position:relative;
+    overflow:hidden;
+    transition: border-color .25s ease, transform .25s ease;
+  }
+  .stat-card::before{
+    content:''; position:absolute; inset:0;
+    background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,0.03) 45%, transparent 90%);
+    transform: translateX(-120%);
+  }
+  .stat-card.flash::before{ animation: sweep .8s ease; }
+  @keyframes sweep{ to{ transform: translateX(120%); } }
+  .stat-card .row{ display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+  .stat-card .row span{ font-size:13px; color:var(--text-dim); }
+  .stat-card .row svg{ width:18px; height:18px; }
+  .stat-value{ font-size:30px; font-weight:700; font-variant-numeric: tabular-nums; transition: color .3s ease; }
+  .stat-value.blocked{ color: var(--red); }
+  .stat-value.anomalies{ color: var(--red); }
+  .stat-value.rulematches{ color: var(--cyan); }
+
+  /* ---------- Chart panel ---------- */
+  .panel{
+    background: var(--panel);
+    border:1px solid var(--panel-border);
+    border-radius:12px;
+    padding:20px 22px;
+  }
+  .chart-legend{ display:flex; gap:18px; font-size:12px; color:var(--text-dim); margin-bottom:8px; justify-content:flex-end; }
+  .chart-legend span{ display:flex; align-items:center; gap:6px; }
+  .dot{ width:9px; height:9px; border-radius:50%; display:inline-block; }
+  .chart-wrap{ height:230px; position:relative; transition: height 0.3s ease; }
+
+  /* ---------- Threat table ---------- */
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{
+    text-align:left; font-weight:500; color:var(--text-dim);
+    padding:10px 8px; border-bottom:1px solid var(--panel-border);
+    font-size:12px;
+  }
+  tbody td{ padding:11px 8px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  tbody tr{ opacity:0; transform: translateY(-6px); animation: rowIn .35s ease forwards; }
+  @keyframes rowIn{ to{ opacity:1; transform:translateY(0); } }
+  tbody tr:hover{ background: rgba(255,255,255,0.02); }
+  .badge{
+    display:inline-block; padding:3px 10px; border-radius:20px;
+    font-size:11px; font-weight:600; letter-spacing:.3px;
+  }
+  .badge.safe{ background: rgba(34,197,94,0.12); color: var(--green); }
+  .badge.alert{ background: rgba(244,63,94,0.14); color: var(--red); animation: alertGlow 1.4s ease-in-out infinite; }
+  @keyframes alertGlow{ 0%,100%{ box-shadow:0 0 0 rgba(244,63,94,0);} 50%{ box-shadow:0 0 10px rgba(244,63,94,0.55);} }
+  .action-allowed{ color: var(--green); font-size:12px; }
+  .action-blocked{ color: var(--red); font-size:12px; font-weight:600; }
+  .sim-tag{
+    font-size:10px; margin-left:6px; padding:1px 6px; border-radius:6px;
+    background: rgba(56,189,248,0.12); color: var(--cyan);
+  }
+  /* FP-Growth se match hone par Threat Table me dikhne wala badge */
+  .rule-badge{
+    font-size:10px; margin-left:6px; padding:1px 6px; border-radius:6px;
+    background: rgba(56,189,248,0.14); color: var(--cyan);
+    display:inline-block;
+  }
+  .table-scroll{ max-height:260px; overflow-y:auto; }
+  .table-scroll::-webkit-scrollbar{ width:6px; }
+  .table-scroll::-webkit-scrollbar-thumb{ background:#243044; border-radius:6px; }
+</style>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5.25 3.75 9.75 9 11 5.25-1.25 9-5.75 9-11V6l-9-4Zm0 2.2 7 3.1V12c0 4.2-2.9 7.9-7 8.94C7.9 19.9 5 16.2 5 12V7.3l7-3.1Zm-1 5.3v6l5-3-5-3Z"/></svg>
+      </div>
+      <div class="brand-name">EdgeGuard AI</div>
+    </div>
+
+    <nav class="nav">
+      <div class="nav-item active" id="nav-dashboard" onclick="switchView('dashboard')">
+        <svg viewBox="0 0 24 24"><path d="M4 4h6v6H4V4Zm10 0h6v10h-6V4ZM4 12h6v8H4v-8Zm10 8v-4h6v4h-6Z"/></svg>
+        Dashboard
+      </div>
+      <div class="nav-item" id="nav-livetraffic" onclick="switchView('livetraffic')">
+        <svg viewBox="0 0 24 24"><path d="M3 12h4l2-7 4 14 2-7h6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Live Traffic
+      </div>
+
+      <!-- ATTACK START/STOP BUTTON -->
+      <button class="attack-toggle-btn" id="attackToggleBtn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M12 2 3 6v6c0 5.25 3.75 9.75 9 11 5.25-1.25 9-5.75 9-11V6l-9-4Zm0 6a3 3 0 1 1 0 6 3 3 0 0 1 0-6Z"/></svg>
+        <span id="attackToggleText">Start Attack</span>
+      </button>
+    </nav>
+
+    <div class="sidebar-alert">
+      <div class="label">LOGOUT ALERT BOX</div>
+      <div class="icon"><svg viewBox="0 0 24 24"><path d="M12 2 1 21h22L12 2Zm0 6 6.5 11h-13L12 8Zm-1 3v4h2v-4h-2Zm0 5v2h2v-2h-2Z"/></svg></div>
+      <div class="title">LOGOUT SYSTEM</div>
+      <div class="user">User: {{ username if username else 'Admin' }}</div>
+      <button class="logout-btn" onclick="window.location.href='/logout'">Logout ⤴</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <h1>NETWORK SECURITY OVERVIEW</h1>
+      <div class="topbar-right">
+        <span id="sys-status"><span class="status-dot"></span>System Online</span>
+        <span class="alerts-pill">
+          <svg viewBox="0 0 24 24"><path d="M12 22a2.2 2.2 0 0 0 2.2-2.2h-4.4A2.2 2.2 0 0 0 12 22Zm7-6v-5a7 7 0 0 0-5.2-6.77V3a1.8 1.8 0 1 0-3.6 0v1.23A7 7 0 0 0 5 11v5l-2 2v1h18v-1l-2-2Z"/></svg>
+          <span id="alertsCount" class="alerts-count">0</span> Alerts
+        </span>
+      </div>
+    </div>
+
+    <div id="stats-section">
+        <h2 class="section-title">STATS GRID</h2>
+        <div class="stats-grid">
+          <div class="stat-card" id="cardBlocked">
+            <div class="row"><span>Attacks Blocked</span>
+              <svg viewBox="0 0 24 24" fill="#f43f5e"><path d="M12 2c2 3 5 4 5 8 0 3.5-2.5 6-5 6s-5-2.5-5-6c0-1 .3-1.9.8-2.7C8.2 8.8 9.5 9.6 10 11c.4-1.7.5-4.5 2-9Z"/></svg>
+            </div>
+            <div class="stat-value blocked" id="statBlocked">0</div>
+          </div>
+          <div class="stat-card" id="cardAnomalies">
+            <div class="row"><span>AI Anomalies</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#f43f5e" stroke-width="1.6"><path d="M9 2a4 4 0 0 0-4 4v.6A3.4 3.4 0 0 0 4 13a3.4 3.4 0 0 0 3 6.8M15 2a4 4 0 0 1 4 4v.6a3.4 3.4 0 0 1 1 6.4 3.4 3.4 0 0 1-3 6.8M9 2v18M15 2v18"/></svg>
+            </div>
+            <div class="stat-value anomalies" id="statAnomalies">0</div>
+          </div>
+          <div class="stat-card" id="cardRuleMatches">
+            <div class="row"><span>Rule Matches</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.6"><path d="M4 6h16M4 12h10M4 18h13" stroke-linecap="round"/><circle cx="19" cy="12" r="2" fill="#38bdf8" stroke="none"/></svg>
+            </div>
+            <div class="stat-value rulematches" id="statRuleMatches">0</div>
+          </div>
+        </div>
+    </div>
+
+    <div id="chart-section">
+        <h2 class="section-title" id="chart-title">LIVE LINE CHART</h2>
+        <div class="panel">
+          <div class="chart-legend">
+            <span><i class="dot" style="background:#3b82f6"></i>Network Traffic</span>
+            <span><i class="dot" style="background:#f43f5e"></i>Threat Level</span>
+          </div>
+          <div class="chart-wrap" id="chart-wrap-container"><canvas id="liveChart"></canvas></div>
+        </div>
+    </div>
+
+    <div id="table-section">
+        <h2 class="section-title">THREAT TABLE</h2>
+        <div class="panel">
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr><th>Time</th><th>IP Source</th><th>ML Status</th><th>Action</th></tr>
+              </thead>
+              <tbody id="threatBody"></tbody>
+            </table>
+          </div>
+        </div>
+    </div>
+  </main>
+
+<!-- 1. Chart.js & Socket.IO CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+<!-- 2. Shared frontend logic (auth + dashboard) -->
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
